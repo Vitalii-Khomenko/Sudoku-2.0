@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Судоку</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin: 0;
+        }
+        #sudoku {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 60px auto 20px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .sudoku-cell {
+            width: calc(11vw - 2px);
+            max-width: 50px;
+            height: calc(11vw - 2px);
+            max-height: 50px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin: 0;
+            text-align: center;
+            line-height: calc(11vw - 2px);
+            font-size: calc(5vw);
+            font-weight: bold;
+            background-color: white;
+            vertical-align: middle;
+            position: relative;
+        }
+        .sudoku-cell input {
+            width: 100%;
+            height: 100%;
+            font-size: calc(5vw);
+            max-font-size: 24px;
+            text-align: center;
+            border: none;
+            outline: none;
+            background: #f8f8f8;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        @media (min-width: 600px) {
+            .sudoku-cell {
+                width: 50px;
+                height: 50px;
+                line-height: 50px;
+                font-size: 24px;
+            }
+            .sudoku-cell input {
+                font-size: 24px;
+            }
+        }
+        .sudoku-cell.given {
+            background-color: #e8f5e9;
+        }
+        .sudoku-cell.incorrect {
+            background-color: #ffebee;
+        }
+        .sudoku-cell.correct {
+            background-color: #a5d6a7;
+        }
+        .sudoku-cell.hint {
+            background-color: #fff3e0;
+        }
+        .sudoku-cell input.correct {
+            background-color: #a5d6a7;
+        }
+        .sudoku-cell input.incorrect {
+            background-color: #ffcdd2;
+        }
+        #sudokuGrid {
+            display: inline-block;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            margin: 0 auto;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+        .sudoku-row {
+            white-space: nowrap;
+            margin: 0;
+            padding: 0;
+        }
+        .sudoku-cell:nth-child(3n) {
+            border-right: 2px solid #666;
+        }
+        .sudoku-row:nth-child(3n) .sudoku-cell {
+            border-bottom: 2px solid #666;
+        }
+        .sudoku-cell:first-child {
+            border-left: 2px solid #666;
+        }
+        .sudoku-row:first-child .sudoku-cell {
+            border-top: 2px solid #666;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        select {
+            padding: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #languageSelect {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+            #sudoku {
+                margin-top: 50px;
+                padding: 5px;
+                width: 100%;
+            }
+            #sudokuGrid {
+                padding: 5px;
+                transform: scale(0.95);
+                transform-origin: center center;
+            }
+            .sudoku-cell {
+                width: calc(10vw - 2px);
+                height: calc(10vw - 2px);
+                line-height: calc(10vw - 2px);
+            }
+            #sudokuGame {
+                width: 100%;
+                margin: 10px auto !important;
+                padding: 0 5px;
+                box-sizing: border-box;
+            }
+            #languageSelect {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 14px;
+            }
+            h1 {
+                margin-top: 50px;
+                font-size: 24px;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+                margin: 3px;
+            }
+            #sudokuControls {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                margin: 10px auto 5px auto;
+                padding: 5px 0;
+            }
+        }
+        #sudokuControls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin: 20px auto 10px auto;
+            padding: 10px 0;
+        }
+        #sudokuControls > * {
+            margin: 0;
+        }
+        .note-number {
+            font-size: 0.3em;
+        }
+        .notes-grid {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+        .notes-left {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding-left: 15%;
+        }
+        .notes-right {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding-right: 15%;
+        }
+        .note-number {
+            color: #2196F3;
+            line-height: 1;
+            font-weight: bold;
+            margin: 0 2px;
+        }
+        /* Размеры шрифта для заметок */
+        .notes-size-small .note-number {
+            font-size: 0.45em;
+        }
+        .notes-size-medium .note-number {
+            font-size: 0.6em;
+        }
+        .notes-size-large .note-number {
+            font-size: 0.75em;
+        }
+        #notesMessage {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .notes-size-small .note-number {
+                font-size: 0.4em;
+            }
+            .notes-size-medium .note-number {
+                font-size: 0.55em;
+            }
+            .notes-size-large .note-number {
+                font-size: 0.7em;
+            }
+        }
+        button.notes-mode {
+            background-color: #2196F3;
+        }
+        button.notes-mode.active {
+            background-color: #f44336;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+        }
+        .error-message {
+            color: #f44336;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 20px;
+            margin: 20px;
+            border: 2px solid #f44336;
+            border-radius: 5px;
+            background-color: #ffebee;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <select id="languageSelect" onchange="changeLanguage(this.value)" aria-label="Выбор языка">
+        <option value="ru">Русский</option>
+        <option value="uk">Українська</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+    </select>
+
+    <div id="sudoku">
+        <h1>Судоку</h1>
+        <p>Заполните пустые клетки числами от 1 до 9 так, чтобы в каждой строке, столбце и квадрате 3×3 все числа были различными</p>
+        <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
+            Developer: Vitalii Khomenko, Stuttgart, 03.2025
+        </div>
+        <div id="sudokuControls">
+            <button onclick="startSudoku()">Новая игра</button>
+            <select id="sudokuDifficulty" aria-label="Выбор сложности">
+                <option value="easy">Легкий</option>
+                <option value="medium">Средний</option>
+                <option value="hard">Сложный</option>
+            </select>
+            <button onclick="toggleNotesMode()" id="notesButton" class="notes-mode">Заметки</button>
+            <select id="notesFontSize" onchange="changeNotesSize(this.value)" aria-label="Размер заметок">
+                <option value="small">Маленький</option>
+                <option value="medium">Средний</option>
+                <option value="large">Большой</option>
+            </select>
+            <div id="notesMessage"></div>
+        </div>
+        <div id="sudokuGame" style="margin: 20px auto; display: none;">
+            <div id="sudokuGrid" style="display: inline-block;"></div>
+            <div id="sudokuInfo" style="margin-top: 20px;">
+                <p id="sudokuStatus"></p>
+                <button onclick="checkSudoku()" id="checkSudokuButton">Проверить</button>
+                <button onclick="showHint()" id="hintButton">Подсказка</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Локализация
+        const translations = {
+            ru: {
+                title: "Судоку",
+                description: "Заполните пустые клетки числами от 1 до 9 так, чтобы в каждой строке, столбце и квадрате 3×3 все числа были различными",
+                newGame: "Новая игра",
+                check: "Проверить",
+                hint: "Подсказка",
+                correct: "Поздравляем! Судоку решено верно!",
+                incorrect: "Есть ошибки. Попробуйте еще раз!",
+                difficulty: {
+                    easy: "Легкий",
+                    medium: "Средний",
+                    hard: "Сложный"
+                },
+                notes: "Заметки",
+                notesSizes: {
+                    small: "Маленький",
+                    medium: "Средний",
+                    large: "Большой"
+                },
+                notesMode: {
+                    on: "Режим заметок включен: нажмите цифру для добавления заметки",
+                    off: "Режим заметок выключен"
+                }
+            },
+            uk: {
+                title: "Судоку",
+                description: "Заповніть порожні клітинки числами від 1 до 9 так, щоб у кожному рядку, стовпці та квадраті 3×3 всі числа були різними",
+                newGame: "Нова гра",
+                check: "Перевірити",
+                hint: "Підказка",
+                correct: "Вітаємо! Судоку розв'язано вірно!",
+                incorrect: "Є помилки. Спробуйте ще раз!",
+                difficulty: {
+                    easy: "Легкий",
+                    medium: "Середній",
+                    hard: "Складний"
+                },
+                notes: "Нотатки",
+                notesSizes: {
+                    small: "Малий",
+                    medium: "Середній",
+                    large: "Великий"
+                },
+                notesMode: {
+                    on: "Режим нотаток увімкнено: натисніть цифру для додавання нотатки",
+                    off: "Режим нотаток вимкнено"
+                }
+            },
+            en: {
+                title: "Sudoku",
+                description: "Fill in the empty cells with numbers 1-9 so that they don't repeat in rows, columns and 3×3 blocks",
+                newGame: "New Game",
+                check: "Check",
+                hint: "Hint",
+                correct: "Congratulations! Sudoku solved correctly!",
+                incorrect: "There are errors. Try again!",
+                difficulty: {
+                    easy: "Easy",
+                    medium: "Medium",
+                    hard: "Hard"
+                },
+                notes: "Notes",
+                notesSizes: {
+                    small: "Small",
+                    medium: "Medium",
+                    large: "Large"
+                },
+                notesMode: {
+                    on: "Notes mode on: click a number to add a note",
+                    off: "Notes mode off"
+                }
+            },
+            de: {
+                title: "Sudoku",
+                description: "Fülle die leeren Zellen mit Zahlen 1-9 so aus, dass sie sich in Zeilen, Spalten und 3×3-Blöcken nicht wiederholen",
+                newGame: "Neues Spiel",
+                check: "Prüfen",
+                hint: "Tipp",
+                correct: "Gratulation! Sudoku richtig gelöst!",
+                incorrect: "Es gibt Fehler. Versuche es noch einmal!",
+                difficulty: {
+                    easy: "Leicht",
+                    medium: "Mittel",
+                    hard: "Schwer"
+                },
+                notes: "Notizen",
+                notesSizes: {
+                    small: "Klein",
+                    medium: "Mittel",
+                    large: "Groß"
+                },
+                notesMode: {
+                    on: "Notizmodus ein: Klicken Sie auf eine Zahl, um eine Notiz hinzuzufügen",
+                    off: "Notizmodus aus"
+                }
+            }
+        };
+
+        // Установка языка по умолчанию
+        let currentLanguage = localStorage.getItem('gameLanguage');
+        if (!currentLanguage) {
+            currentLanguage = 'ru';
+            localStorage.setItem('gameLanguage', currentLanguage);
+        }
+
+        // Устанавливаем выбранный язык в селекте
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageSelect = document.getElementById('languageSelect');
+            languageSelect.value = currentLanguage;
+            updateTexts();
+        });
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('gameLanguage', lang);
+            updateTexts();
+        }
+
+        function updateTexts() {
+            const t = translations[currentLanguage];
+            document.title = t.title;
+            document.querySelector('h1').textContent = t.title;
+            document.querySelector('#sudoku p').textContent = t.description;
+            document.querySelector('#sudokuControls button').textContent = t.newGame;
+            document.getElementById('checkSudokuButton').textContent = t.check;
+            document.getElementById('hintButton').textContent = t.hint;
+            
+            // Обновляем опции сложности
+            const difficultySelect = document.getElementById('sudokuDifficulty');
+            const options = difficultySelect.options;
+            options[0].textContent = t.difficulty.easy;
+            options[1].textContent = t.difficulty.medium;
+            options[2].textContent = t.difficulty.hard;
+
+            // Обновляем статус, если он есть
+            const status = document.getElementById('sudokuStatus');
+            if (status.textContent) {
+                status.textContent = status.textContent.includes('Поздравляем') ? t.correct : t.incorrect;
+            }
+
+            document.getElementById('notesButton').textContent = t.notes;
+
+            // Обновляем опции размера шрифта
+            const fontSizeSelect = document.getElementById('notesFontSize');
+            const sizeOptions = fontSizeSelect.options;
+            sizeOptions[0].textContent = t.notesSizes.small;
+            sizeOptions[1].textContent = t.notesSizes.medium;
+            sizeOptions[2].textContent = t.notesSizes.large;
+
+            document.getElementById('notesMessage').textContent = t.notesMode.off;
+        }
+
+        let sudokuData = {
+            grid: [],
+            solution: [],
+            difficulty: 'easy'
+        };
+
+        function startSudoku() {
+            const difficulty = document.getElementById('sudokuDifficulty').value;
+            sudokuData.difficulty = difficulty;
+            generateSudoku();
+            displaySudoku();
+            document.getElementById('sudokuGame').style.display = 'block';
+            document.getElementById('sudokuStatus').textContent = '';
+        }
+
+        function generateSudoku() {
+            // Создаем пустую сетку
+            sudokuData.grid = Array(9).fill().map(() => Array(9).fill(0));
+            sudokuData.solution = Array(9).fill().map(() => Array(9).fill(0));
+
+            // Заполняем решение
+            fillSudoku(sudokuData.solution);
+            
+            // Копируем решение в игровую сетку
+            for(let i = 0; i < 9; i++) {
+                for(let j = 0; j < 9; j++) {
+                    sudokuData.grid[i][j] = sudokuData.solution[i][j];
+                }
+            }
+
+            // Удаляем числа в зависимости от сложности
+            const cellsToRemove = {
+                'easy': 40,
+                'medium': 50,
+                'hard': 60
+            };
+
+            let removed = 0;
+            while (removed < cellsToRemove[sudokuData.difficulty]) {
+                const row = Math.floor(Math.random() * 9);
+                const col = Math.floor(Math.random() * 9);
+                if (sudokuData.grid[row][col] !== 0) {
+                    sudokuData.grid[row][col] = 0;
+                    removed++;
+                }
+            }
+        }
+
+        function fillSudoku(grid, row = 0, col = 0) {
+            if (col === 9) {
+                row++;
+                col = 0;
+            }
+            if (row === 9) return true;
+
+            if (grid[row][col] !== 0) return fillSudoku(grid, row, col + 1);
+
+            const nums = [1,2,3,4,5,6,7,8,9];
+            shuffleArray(nums);
+
+            for (let num of nums) {
+                if (isValidMove(grid, row, col, num)) {
+                    grid[row][col] = num;
+                    if (fillSudoku(grid, row, col + 1)) return true;
+                    grid[row][col] = 0;
+                }
+            }
+            return false;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function isValidMove(grid, row, col, num) {
+            // Проверка строки
+            for(let x = 0; x < 9; x++) {
+                if(grid[row][x] === num) return false;
+            }
+
+            // Проверка столбца
+            for(let x = 0; x < 9; x++) {
+                if(grid[x][col] === num) return false;
+            }
+
+            // Проверка квадрата 3x3
+            let startRow = row - row % 3,
+                startCol = col - col % 3;
+            for(let i = 0; i < 3; i++) {
+                for(let j = 0; j < 3; j++) {
+                    if(grid[i + startRow][j + startCol] === num) return false;
+                }
+            }
+
+            return true;
+        }
+
+        function displaySudoku() {
+            const gridDiv = document.getElementById('sudokuGrid');
+            gridDiv.innerHTML = '';
+
+            for(let i = 0; i < 9; i++) {
+                const row = document.createElement('div');
+                row.className = 'sudoku-row';
+                
+                for(let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'sudoku-cell';
+                    
+                    if(sudokuData.grid[i][j] !== 0) {
+                        cell.textContent = sudokuData.grid[i][j];
+                        cell.classList.add('given');
+                    } else {
+                        const input = document.createElement('input');
+                        input.type = 'tel';
+                        input.inputMode = 'numeric';
+                        input.pattern = '[1-9]';
+                        input.min = '1';
+                        input.max = '9';
+                        input.dataset.row = i;
+                        input.dataset.col = j;
+                        input.notes = new Set();
+                        input.addEventListener('input', function(e) {
+                            if (this.value.length > 1) {
+                                this.value = this.value.slice(-1);
+                            }
+                            const num = parseInt(this.value);
+                            if (isNaN(num) || num < 1 || num > 9) {
+                                this.value = '';
+                            } else {
+                                if (isNotesMode) {
+                                    // В режиме заметок сохраняем текущее значение
+                                    const currentValue = this.value;
+                                    this.value = currentValue;
+                                    toggleNote(this, num);
+                                } else {
+                                    // В обычном режиме вводим число, но сохраняем заметки
+                                    this.value = num;
+                                }
+                            }
+                            this.parentElement.classList.remove('incorrect', 'hint');
+                        });
+                        input.addEventListener('focus', function() {
+                            if(window.innerWidth <= 600) {
+                                this.select();
+                            }
+                        });
+                        cell.appendChild(input);
+                    }
+                    row.appendChild(cell);
+                }
+                gridDiv.appendChild(row);
+            }
+        }
+
+        function checkSudoku() {
+            const t = translations[currentLanguage];
+            let isCorrect = true;
+            const inputs = document.querySelectorAll('#sudokuGrid input');
+            
+            // Сначала очищаем все классы подсветки
+            inputs.forEach(input => {
+                input.classList.remove('correct', 'incorrect');
+                input.parentElement.classList.remove('correct', 'incorrect');
+            });
+            
+            // Проверяем каждую ячейку
+            inputs.forEach(input => {
+                const row = parseInt(input.dataset.row);
+                const col = parseInt(input.dataset.col);
+                const value = parseInt(input.value);
+                
+                if(isNaN(value)) {
+                    isCorrect = false;
+                    input.classList.add('incorrect');
+                    input.parentElement.classList.add('incorrect');
+                } else if(value !== sudokuData.solution[row][col]) {
+                    isCorrect = false;
+                    input.classList.add('incorrect');
+                    input.parentElement.classList.add('incorrect');
+                } else {
+                    input.classList.add('correct');
+                    input.parentElement.classList.add('correct');
+                }
+            });
+
+            document.getElementById('sudokuStatus').textContent = 
+                isCorrect ? t.correct : t.incorrect;
+
+            // Удаляем подсветку через 5 секунд
+            setTimeout(() => {
+                inputs.forEach(input => {
+                    input.classList.remove('correct', 'incorrect');
+                    input.parentElement.classList.remove('correct', 'incorrect');
+                });
+                // Очищаем статус только если игра не решена
+                if (!isCorrect) {
+                    document.getElementById('sudokuStatus').textContent = '';
+                }
+            }, 5000);
+        }
+
+        function showHint() {
+            const emptyCells = [];
+            const inputs = document.querySelectorAll('#sudokuGrid input');
+            
+            inputs.forEach(input => {
+                if(!input.value) {
+                    emptyCells.push(input);
+                }
+            });
+
+            if(emptyCells.length > 0) {
+                const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const row = parseInt(randomCell.dataset.row);
+                const col = parseInt(randomCell.dataset.col);
+                
+                randomCell.value = sudokuData.solution[row][col];
+                randomCell.parentElement.classList.add('hint');
+            }
+        }
+
+        let isNotesMode = false;
+
+        function toggleNotesMode() {
+            isNotesMode = !isNotesMode;
+            const notesButton = document.getElementById('notesButton');
+            const notesMessage = document.getElementById('notesMessage');
+            notesButton.classList.toggle('active');
+            
+            const t = translations[currentLanguage];
+            notesMessage.textContent = isNotesMode ? t.notesMode.on : t.notesMode.off;
+            notesMessage.style.display = 'block';
+            
+            // Скрываем сообщение через 3 секунды при выключении режима
+            if (!isNotesMode) {
+                setTimeout(() => {
+                    notesMessage.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function createNotesGrid(cell) {
+            const notesGrid = document.createElement('div');
+            notesGrid.className = 'notes-grid';
+            
+            const leftNotes = document.createElement('div');
+            leftNotes.className = 'notes-left';
+            
+            const rightNotes = document.createElement('div');
+            rightNotes.className = 'notes-right';
+            
+            // Создаем контейнер для левой заметки
+            const leftNoteDiv = document.createElement('div');
+            leftNoteDiv.className = 'note-number';
+            leftNoteDiv.dataset.position = 'left';
+            leftNotes.appendChild(leftNoteDiv);
+            
+            // Создаем контейнер для правой заметки
+            const rightNoteDiv = document.createElement('div');
+            rightNoteDiv.className = 'note-number';
+            rightNoteDiv.dataset.position = 'right';
+            rightNotes.appendChild(rightNoteDiv);
+            
+            notesGrid.appendChild(leftNotes);
+            notesGrid.appendChild(rightNotes);
+            return notesGrid;
+        }
+
+        function updateNotesDisplay(input) {
+            let notesGrid = input.parentElement.querySelector('.notes-grid');
+            if (!notesGrid) {
+                notesGrid = createNotesGrid(input.parentElement);
+                input.parentElement.appendChild(notesGrid);
+            }
+            
+            const notes = Array.from(input.notes || new Set()).sort((a, b) => a - b);
+            const leftNote = notesGrid.querySelector('.notes-left .note-number');
+            const rightNote = notesGrid.querySelector('.notes-right .note-number');
+            
+            leftNote.textContent = notes[0] || '';
+            rightNote.textContent = notes[1] || '';
+        }
+
+        function toggleNote(input, number) {
+            if (!input.notes) {
+                input.notes = new Set();
+            }
+            
+            // В режиме заметок можно сохранить до двух заметок
+            if (isNotesMode) {
+                if (input.notes.has(number)) {
+                    input.notes.delete(number);
+                } else if (input.notes.size < 2) {
+                    input.notes.add(number);
+                } else {
+                    // Если уже есть две заметки, удаляем первую и добавляем новую
+                    const [firstNote] = input.notes;
+                    input.notes.delete(firstNote);
+                    input.notes.add(number);
+                }
+                updateNotesDisplay(input);
+            }
+        }
+
+        function changeNotesSize(size) {
+            const grid = document.getElementById('sudokuGrid');
+            grid.className = `notes-size-${size}`;
+            localStorage.setItem('notesFontSize', size);
+        }
+
+        // Инициализация размера шрифта при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedSize = localStorage.getItem('notesFontSize') || 'medium';
+            document.getElementById('notesFontSize').value = savedSize;
+            changeNotesSize(savedSize);
+        });
+
+        // Добавляем функцию проверки целостности
+        function checkIntegrity() {
+            const developerInfo = document.querySelector('#sudoku div[style*="font-size: 14px"]').textContent.trim();
+            const expectedInfo = "Developer: Vitalii Khomenko, Stuttgart, 03.2025";
+            return developerInfo === expectedInfo;
+        }
+
+        // Функция блокировки игры
+        function blockGame() {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                ОШИБКА: Обнаружено несанкционированное изменение кода!<br>
+                ERROR: Unauthorized code modification detected!<br>
+                FEHLER: Unbefugte Codeänderung erkannt!<br>
+                ПОМИЛКА: Виявлено несанкціоновану зміну коду!<br><br>
+                <span style="font-size: 14px;">
+                    Пожалуйста, восстановите оригинальную информацию о разработчике.<br>
+                    Please restore the original developer information.<br>
+                    Bitte stellen Sie die ursprünglichen Entwicklerinformationen wieder her.<br>
+                    Будь ласка, відновіть оригінальну інформацію про розробника.
+                </span>
+            `;
+            
+            document.getElementById('sudokuGrid').innerHTML = '';
+            document.getElementById('sudokuControls').style.display = 'none';
+            document.getElementById('sudokuInfo').style.display = 'none';
+            document.getElementById('sudokuStatus').textContent = '';
+            
+            // Добавляем сообщение об ошибке после заголовка
+            const title = document.querySelector('#sudoku h1');
+            title.parentNode.insertBefore(errorDiv, title.nextSibling);
+        }
+
+        // Модифицируем основные функции игры
+        const originalStartSudoku = startSudoku;
+        startSudoku = function() {
+            if (!checkIntegrity()) {
+                blockGame();
+                return;
+            }
+            originalStartSudoku();
+        }
+
+        const originalCheckSudoku = checkSudoku;
+        checkSudoku = function() {
+            if (!checkIntegrity()) {
+                blockGame();
+                return;
+            }
+            originalCheckSudoku();
+        }
+
+        const originalShowHint = showHint;
+        showHint = function() {
+            if (!checkIntegrity()) {
+                blockGame();
+                return;
+            }
+            originalShowHint();
+        }
+
+        const originalToggleNotesMode = toggleNotesMode;
+        toggleNotesMode = function() {
+            if (!checkIntegrity()) {
+                blockGame();
+                return;
+            }
+            originalToggleNotesMode();
+        }
+
+        // Добавляем проверку при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkIntegrity()) {
+                blockGame();
+                return;
+            }
+            const languageSelect = document.getElementById('languageSelect');
+            languageSelect.value = currentLanguage;
+            updateTexts();
+            const savedSize = localStorage.getItem('notesFontSize') || 'medium';
+            document.getElementById('notesFontSize').value = savedSize;
+            changeNotesSize(savedSize);
+        });
+
+        // Добавляем периодическую проверку
+        setInterval(function() {
+            if (!checkIntegrity()) {
+                blockGame();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
