@@ -3,9 +3,11 @@
 **Developer:** Vitalii Khomenko, Stuttgart, 03.2025
 
 ## Game Description
+
 Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 grid with digits from 1 to 9 so that each row, column, and 3×3 subgrid contains all the digits exactly once.
 
 ## Features
+
 - **Multilingual Interface:**
   - Russian
   - Ukrainian
@@ -37,8 +39,11 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Developer information integrity protection
 
 ## Controls
+
 - **Main Mode:**
-  - Enter digits 1–9 in empty cells
+  - Enter digits 1–9 in empty cellss
+
+- **Main Mode
   - Input is automatically validated
   - Entered numbers can be changed
 - **Notes Mode:**
@@ -52,6 +57,7 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Informative result message
 
 ## Visual Design
+
 - **Color Scheme:**
   - White background for the game field
   - Green highlight for given numbers
@@ -65,6 +71,7 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Informative messages and hints
 
 ## Security
+
 - **Copyright Protection:**
   - Developer information integrity check
   - Game is blocked if unauthorized changes are detected
@@ -72,6 +79,7 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Periodic integrity verification
 
 ## Technical Requirements
+
 - **Browser:**
   - JavaScript support
   - Local storage support
@@ -82,10 +90,12 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Touch input support for mobile devices
 
 ## How to Run
+
 1. Download or clone the repository.
 2. Open `sudoku.html` in any modern web browser.
 3. Enjoy the game!
 
 ## License
+
 This project is for personal and educational use.  
 All rights reserved © Vitalii Khomenko, 2025.
