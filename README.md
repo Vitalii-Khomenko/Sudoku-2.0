@@ -22,6 +22,7 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
   - Notes are displayed in the upper corners of the cell
   - Three font sizes for notes (small, medium, large)
   - Notes are shown in blue
+  - Notes mode does not overwrite the main cell value
   - Notes are preserved when entering a main number
 - **Checking and Hints:**
   - Check button with color feedback
@@ -41,9 +42,7 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
 ## Controls
 
 - **Main Mode:**
-  - Enter digits 1–9 in empty cellss
-
-- **Main Mode
+  - Enter digits 1–9 in empty cells
   - Input is automatically validated
   - Entered numbers can be changed
 - **Notes Mode:**
@@ -94,6 +93,14 @@ Sudoku is a classic logic-based puzzle game. The objective is to fill a 9×9 gri
 1. Download or clone the repository.
 2. Open `sudoku.html` in any modern web browser.
 3. Enjoy the game!
+
+## Git Troubleshooting
+
+If Git reports `detected dubious ownership`, run:
+
+```bash
+git config --global --add safe.directory "E:/ARHIV!!!/Work/AI Programming/Github/Sudoku-2.0"
+```
 
 ## License
 

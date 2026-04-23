@@ -282,7 +282,7 @@
     <div id="sudoku">
         <h1>Судоку</h1>
         <p>Заполните пустые клетки числами от 1 до 9 так, чтобы в каждой строке, столбце и квадрате 3×3 все числа были различными</p>
-        <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
+        <div id="developerInfo" style="font-size: 14px; color: #666; margin-bottom: 10px;">
             Developer: Vitalii Khomenko, Stuttgart, 03.2025
         </div>
         <div id="sudokuControls">
@@ -418,13 +418,6 @@
             localStorage.setItem('gameLanguage', currentLanguage);
         }
 
-        // Устанавливаем выбранный язык в селекте
-        document.addEventListener('DOMContentLoaded', function() {
-            const languageSelect = document.getElementById('languageSelect');
-            languageSelect.value = currentLanguage;
-            updateTexts();
-        });
-
         function changeLanguage(lang) {
             currentLanguage = lang;
             localStorage.setItem('gameLanguage', lang);
@@ -449,8 +442,10 @@
 
             // Обновляем статус, если он есть
             const status = document.getElementById('sudokuStatus');
-            if (status.textContent) {
-                status.textContent = status.textContent.includes('Поздравляем') ? t.correct : t.incorrect;
+            if (lastCheckResult === true) {
+                status.textContent = t.correct;
+            } else if (lastCheckResult === false) {
+                status.textContent = t.incorrect;
             }
 
             document.getElementById('notesButton').textContent = t.notes;
@@ -470,6 +465,9 @@
             solution: [],
             difficulty: 'easy'
         };
+        let gameBlocked = false;
+        let integrityIntervalId = null;
+        let lastCheckResult = null;
 
         function startSudoku() {
             const difficulty = document.getElementById('sudokuDifficulty').value;
@@ -478,6 +476,7 @@
             displaySudoku();
             document.getElementById('sudokuGame').style.display = 'block';
             document.getElementById('sudokuStatus').textContent = '';
+            lastCheckResult = null;
         }
 
         function generateSudoku() {
@@ -599,10 +598,9 @@
                                 this.value = '';
                             } else {
                                 if (isNotesMode) {
-                                    // В режиме заметок сохраняем текущее значение
-                                    const currentValue = this.value;
-                                    this.value = currentValue;
                                     toggleNote(this, num);
+                                    // In notes mode we keep notes only and do not enter a main number.
+                                    this.value = '';
                                 } else {
                                     // В обычном режиме вводим число, но сохраняем заметки
                                     this.value = num;
@@ -656,6 +654,7 @@
 
             document.getElementById('sudokuStatus').textContent = 
                 isCorrect ? t.correct : t.incorrect;
+            lastCheckResult = isCorrect;
 
             // Удаляем подсветку через 5 секунд
             setTimeout(() => {
@@ -666,6 +665,7 @@
                 // Очищаем статус только если игра не решена
                 if (!isCorrect) {
                     document.getElementById('sudokuStatus').textContent = '';
+                    lastCheckResult = null;
                 }
             }, 5000);
         }
@@ -686,6 +686,10 @@
                 const col = parseInt(randomCell.dataset.col);
                 
                 randomCell.value = sudokuData.solution[row][col];
+                if (randomCell.notes && randomCell.notes.size) {
+                    randomCell.notes.clear();
+                    updateNotesDisplay(randomCell);
+                }
                 randomCell.parentElement.classList.add('hint');
             }
         }
@@ -779,22 +783,27 @@
             localStorage.setItem('notesFontSize', size);
         }
 
-        // Инициализация размера шрифта при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedSize = localStorage.getItem('notesFontSize') || 'medium';
-            document.getElementById('notesFontSize').value = savedSize;
-            changeNotesSize(savedSize);
-        });
-
         // Добавляем функцию проверки целостности
         function checkIntegrity() {
-            const developerInfo = document.querySelector('#sudoku div[style*="font-size: 14px"]').textContent.trim();
+            const developerInfoNode = document.getElementById('developerInfo');
+            if (!developerInfoNode) {
+                return false;
+            }
+            const developerInfo = developerInfoNode.textContent.trim();
             const expectedInfo = "Developer: Vitalii Khomenko, Stuttgart, 03.2025";
             return developerInfo === expectedInfo;
         }
 
         // Функция блокировки игры
         function blockGame() {
+            if (gameBlocked) {
+                return;
+            }
+            gameBlocked = true;
+            if (integrityIntervalId) {
+                clearInterval(integrityIntervalId);
+                integrityIntervalId = null;
+            }
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
@@ -863,20 +872,19 @@
                 blockGame();
                 return;
             }
+            gameBlocked = false;
             const languageSelect = document.getElementById('languageSelect');
             languageSelect.value = currentLanguage;
             updateTexts();
             const savedSize = localStorage.getItem('notesFontSize') || 'medium';
             document.getElementById('notesFontSize').value = savedSize;
             changeNotesSize(savedSize);
+            integrityIntervalId = setInterval(function() {
+                if (!checkIntegrity()) {
+                    blockGame();
+                }
+            }, 1000);
         });
-
-        // Добавляем периодическую проверку
-        setInterval(function() {
-            if (!checkIntegrity()) {
-                blockGame();
-            }
-        }, 1000);
     </script>
 </body>
 </html>
